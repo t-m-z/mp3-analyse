@@ -1,0 +1,11 @@
+name: mp3_analyse
+description: Analyse of MP3 files - MPEG audio frames and ID3 tags (v1, v1.1, v2.2, v2.3, v2.4).
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+# No runtime dependencies (only dart:convert and dart:typed_data).
+dev_dependencies:
+  test: ^1.24.0
