@@ -1,6 +1,6 @@
 # mp3-analyse
 
-Analyse von MP3- und WAV-Dateien inkl. ID3-Tags – reines Dart, keine Abhängigkeiten
+Analyse von MP3-, WAV- und Ogg/Vorbis-Dateien inkl. Tags – reines Dart, keine Abhängigkeiten
 (nur `dart:convert` und `dart:typed_data`, läuft also auch im Web / in Flutter).
 
 Öffentliche Funktionen:
@@ -8,6 +8,7 @@ Analyse von MP3- und WAV-Dateien inkl. ID3-Tags – reines Dart, keine Abhängig
 ```dart
 Map<String, Object?>  mp3Analyze(Uint8List data)               // MPEG-Frames + alle Tags einer MP3-Datei
 Map<String, Object?>  wavAnalyze(Uint8List data)               // WAV: Format, alle Chunks, ID3-Tags
+Map<String, Object?>  oggAnalyze(Uint8List data)               // Ogg: Seiten, Streams, Vorbis-Header, Pakete
 Map<String, Object?>  id3Analyze(Uint8List data)               // alle ID3-Tags (v1, v1.1, v2.2, v2.3, v2.4)
 Map<String, Object?>? id3v2Analyze(Uint8List data, [int offset = 0])  // ein ID3v2-Tag ab offset
 Map<String, Object?>? id3v1Analyze(Uint8List data, [int? offset])     // ein ID3v1-Tag (Standard: letzte 128 Bytes)
@@ -23,6 +24,7 @@ Namen kollidiert).
 lib/mp3_analyze.dart              library + mp3Analyze()
 lib/src/id3_analyze.dart          öffentliche ID3-Analyse (id3Analyze, id3v2Analyze, id3v1Analyze)
 lib/src/wav_analyze.dart          wavAnalyze()
+lib/src/ogg_analyze.dart          oggAnalyze()
 lib/src/mp3_bytes.dart            Byte-/Text-Helfer, Syncsafe, Unsynchronisation, CRC-32
 lib/src/mp3_inflate.dart          eigener zlib/deflate-Decoder für komprimierte ID3v2-Frames
 lib/src/mp3_mpeg_frames.dart      MPEG-Audio-Frames, Xing/Info/LAME, VBRI
@@ -53,6 +55,7 @@ part 'src/mp3_id3v2_content.dart';
 part 'src/mp3_id3v2_names.dart';
 part 'src/id3_analyze.dart';
 part 'src/wav_analyze.dart';
+part 'src/ogg_analyze.dart';
 ```
 
 (`dart:math` wird zusätzlich als `import 'dart:math' as math;` benötigt.)
@@ -116,6 +119,24 @@ Pad-Byte und Inhaltsanalyse, LIST-Chunks mit Unterchunks:
 * Chunks hinter dem deklarierten RIFF-Ende, nicht finalisierte Dateien
   (data-Größe 0 / 0xFFFFFFFF), fehlende Pad-Bytes, abgeschnittene Dateien
 
+**Ogg** (`oggAnalyze`) – Ogg Vorbis, außerdem Opus, FLAC, Speex und Theora in Ogg:
+
+* jede Seite: Capture Pattern, Version, Header-Type-Flags (continued, BOS, EOS),
+  Granule Position, Serial Number, Sequence Number, CRC mit Prüfung,
+  Lacing-Werte, Header-/Datenbytes und welche Pakete auf der Seite liegen
+* logische Streams (einzeln, gruppiert/gemultiplext, verkettet), Pakete über
+  Seitengrenzen hinweg zusammengesetzt, Lücken in der Sequenz, fehlendes EOS
+* Vorbis Identification Header (Version, Kanäle, Samplerate, Bitraten,
+  Blockgrößen), Comment Header (Vendor, alle Felder, METADATA_BLOCK_PICTURE
+  wird dekodiert), Setup Header komplett zerlegt (Codebooks, Floors,
+  Residues, Mappings, Modes)
+* jedes Audiopaket: Mode, Blockgröße, Fensterflags und Anzahl dekodierter
+  Samples; Abgleich mit der Granule Position (Offset am Anfang, am Ende
+  abgeschnittene Samples), Dauer und Bitrate
+* Opus (OpusHead, OpusTags, TOC jedes Pakets), FLAC (STREAMINFO und alle
+  Metadatenblöcke), Speex-, Theora- und Skeleton-Header
+* Fremddaten zwischen den Seiten, ID3v2 davor, ID3v1/APE/Lyrics3 dahinter
+
 ## Ausgabe
 
 Eine JSON-taugliche `Map` (Struktur siehe Doku-Kommentar von `mp3Analyze`):
@@ -140,4 +161,5 @@ dart test
 
 Die Testdateien in `test/fixtures` erzeugt `tool/make_fixtures.py` (Audio mit
 ffmpeg, die ID3-Tags werden von Hand gebaut, um alle Sonderfälle abzudecken),
-die WAV-Testdateien `tool/make_wav_fixtures.py`.
+die WAV-Testdateien `tool/make_wav_fixtures.py`, die Ogg-Testdateien
+`tool/make_ogg_fixtures.py`.

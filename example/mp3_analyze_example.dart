@@ -1,4 +1,4 @@
-// Usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav> [--frames]
+// Usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav|file.ogg> [--frames]
 //
 // Prints the analysis as JSON. Without --frames the (long) list of MPEG
 // frames is shortened to the first three frames.
@@ -10,12 +10,22 @@ import 'package:mp3_analyse/mp3_analyze.dart';
 
 void main(List<String> args) {
   if (args.isEmpty) {
-    stderr.writeln('usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav> [--frames]');
+    stderr.writeln('usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav|file.ogg> [--frames]');
     exit(64);
   }
   final bytes = Uint8List.fromList(File(args.first).readAsBytesSync());
-  final isWav = args.first.toLowerCase().endsWith('.wav');
-  final result = isWav ? wavAnalyze(bytes) : mp3Analyze(bytes);
+  final name = args.first.toLowerCase();
+  final isWav = name.endsWith('.wav');
+  final isOgg = const ['.ogg', '.oga', '.ogv', '.opus', '.spx'].any(name.endsWith);
+  final result = isWav ? wavAnalyze(bytes) : (isOgg ? oggAnalyze(bytes) : mp3Analyze(bytes));
+  if (isOgg && !args.contains('--frames')) {
+    final pages = result['pages'] as List;
+    if (pages.length > 3) result['pages'] = [...pages.take(3), '... ${pages.length - 3} more pages (use --frames)'];
+    for (final s in (result['streams'] as List).cast<Map<String, Object?>>()) {
+      final packets = s['packets'] as List;
+      if (packets.length > 6) s['packets'] = [...packets.take(6), '... ${packets.length - 6} more packets (use --frames)'];
+    }
+  }
   final dataChunk = isWav
       ? ((result['chunks'] as List?) ?? const []).cast<Map<String, Object?>>().where((c) => c['id'] == 'data').firstOrNull
       : null;

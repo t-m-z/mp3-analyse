@@ -1,8 +1,10 @@
-/// Analysis of MP3 and WAV files including their ID3 tags.
+/// Analysis of MP3, WAV and Ogg/Vorbis files including their tags.
 ///
 /// Public API:
 /// * [mp3Analyze]   - MPEG audio frames + all tags of an MP3 file
 /// * [wavAnalyze]   - WAV file: format, all RIFF chunks, ID3 tags
+/// * [oggAnalyze]   - Ogg file: pages, logical streams, Vorbis (Opus, FLAC,
+///                    Speex, Theora) headers, comments and packets
 /// * [id3Analyze]   - all ID3 tags (v1, v1.1, v2.2, v2.3, v2.4) in a byte buffer
 /// * [id3v2Analyze] - a single ID3v2 tag at a given offset
 /// * [id3v1Analyze] - a single ID3v1 / ID3v1.1 tag
@@ -27,6 +29,10 @@
 ///   MPEG), data (PCM/float statistics, MPEG frames), fact, LIST/INFO,
 ///   LIST/adtl, cue, plst, smpl, inst, acid, bext, cart, ds64, PEAK, iXML,
 ///   axml, _PMX, chna, DISP, JUNK/PAD/FLLR and id3 chunks.
+/// * Ogg: pages with CRC check, grouped/chained logical streams, packet
+///   reassembly; Vorbis identification/comment/setup headers (codebooks,
+///   floors, residues, mappings, modes) and audio packets (mode, block size,
+///   samples, granule check); Opus, FLAC, Speex, Theora and Skeleton headers.
 library mp3_analyze;
 
 import 'dart:convert';
@@ -43,6 +49,7 @@ part 'src/mp3_id3v2_content.dart';
 part 'src/mp3_id3v2_names.dart';
 part 'src/id3_analyze.dart';
 part 'src/wav_analyze.dart';
+part 'src/ogg_analyze.dart';
 
 /// Analyses the bytes of an MP3 file.
 ///
