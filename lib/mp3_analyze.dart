@@ -1,8 +1,15 @@
-/// Analysis of MP3 files.
+/// Analysis of MP3 and WAV files including their ID3 tags.
 ///
-/// The only public member of this library is [mp3Analyze]. All helpers live
-/// in `part` files and are library private (prefixed with `_mp3` / `_Mp3`
-/// so they do not clash when the parts are moved into another library).
+/// Public API:
+/// * [mp3Analyze]   - MPEG audio frames + all tags of an MP3 file
+/// * [wavAnalyze]   - WAV file: format, all RIFF chunks, ID3 tags
+/// * [id3Analyze]   - all ID3 tags (v1, v1.1, v2.2, v2.3, v2.4) in a byte buffer
+/// * [id3v2Analyze] - a single ID3v2 tag at a given offset
+/// * [id3v1Analyze] - a single ID3v1 / ID3v1.1 tag
+///
+/// All helpers live in `part` files and are library private (prefixed with
+/// `_mp3` / `_wav` so they do not clash when the parts are moved into another
+/// library).
 ///
 /// Covered:
 /// * MPEG audio frames (MPEG 1 / 2 / 2.5, Layer I / II / III) with a full
@@ -16,9 +23,14 @@
 ///   including the CHAP/CTOC addendum with embedded sub frames).
 /// * Detection of APEv1/APEv2 and Lyrics3 v1/v2 blocks, so they are not
 ///   misinterpreted as audio data.
+/// * WAV: RIFF/RIFX/RF64/BW64, fmt (incl. WAVE_FORMAT_EXTENSIBLE, ADPCM,
+///   MPEG), data (PCM/float statistics, MPEG frames), fact, LIST/INFO,
+///   LIST/adtl, cue, plst, smpl, inst, acid, bext, cart, ds64, PEAK, iXML,
+///   axml, _PMX, chna, DISP, JUNK/PAD/FLLR and id3 chunks.
 library mp3_analyze;
 
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 part 'src/mp3_bytes.dart';
@@ -29,6 +41,8 @@ part 'src/mp3_trailing_tags.dart';
 part 'src/mp3_id3v2.dart';
 part 'src/mp3_id3v2_content.dart';
 part 'src/mp3_id3v2_names.dart';
+part 'src/id3_analyze.dart';
+part 'src/wav_analyze.dart';
 
 /// Analyses the bytes of an MP3 file.
 ///

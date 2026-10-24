@@ -1,20 +1,28 @@
 # mp3-analyse
 
-Analyse von MP3-Dateien inkl. ID3-Tags – reines Dart, keine Abhängigkeiten
+Analyse von MP3- und WAV-Dateien inkl. ID3-Tags – reines Dart, keine Abhängigkeiten
 (nur `dart:convert` und `dart:typed_data`, läuft also auch im Web / in Flutter).
 
+Öffentliche Funktionen:
+
 ```dart
-Map<String, Object?> mp3Analyze(Uint8List data)
+Map<String, Object?>  mp3Analyze(Uint8List data)               // MPEG-Frames + alle Tags einer MP3-Datei
+Map<String, Object?>  wavAnalyze(Uint8List data)               // WAV: Format, alle Chunks, ID3-Tags
+Map<String, Object?>  id3Analyze(Uint8List data)               // alle ID3-Tags (v1, v1.1, v2.2, v2.3, v2.4)
+Map<String, Object?>? id3v2Analyze(Uint8List data, [int offset = 0])  // ein ID3v2-Tag ab offset
+Map<String, Object?>? id3v1Analyze(Uint8List data, [int? offset])     // ein ID3v1-Tag (Standard: letzte 128 Bytes)
 ```
 
-ist das einzige öffentliche Element. Alles andere steckt in `part`-Dateien und
-ist privat (Präfix `_mp3` / `_Mp3`, damit es beim Einbau in eine andere Library
-nicht mit vorhandenen privaten Namen kollidiert).
+Alles andere steckt in `part`-Dateien und ist privat (Präfix `_mp3` / `_wav`,
+damit es beim Einbau in eine andere Library nicht mit vorhandenen privaten
+Namen kollidiert).
 
 ## Aufbau
 
 ```
 lib/mp3_analyze.dart              library + mp3Analyze()
+lib/src/id3_analyze.dart          öffentliche ID3-Analyse (id3Analyze, id3v2Analyze, id3v1Analyze)
+lib/src/wav_analyze.dart          wavAnalyze()
 lib/src/mp3_bytes.dart            Byte-/Text-Helfer, Syncsafe, Unsynchronisation, CRC-32
 lib/src/mp3_inflate.dart          eigener zlib/deflate-Decoder für komprimierte ID3v2-Frames
 lib/src/mp3_mpeg_frames.dart      MPEG-Audio-Frames, Xing/Info/LAME, VBRI
@@ -43,9 +51,14 @@ part 'src/mp3_trailing_tags.dart';
 part 'src/mp3_id3v2.dart';
 part 'src/mp3_id3v2_content.dart';
 part 'src/mp3_id3v2_names.dart';
+part 'src/id3_analyze.dart';
+part 'src/wav_analyze.dart';
 ```
 
+(`dart:math` wird zusätzlich als `import 'dart:math' as math;` benötigt.)
+
 plus die Funktion `mp3Analyze` aus `lib/mp3_analyze.dart`.
+Die Imports also: `dart:convert`, `dart:math` (als `math`) und `dart:typed_data`.
 
 ## Was analysiert wird
 
@@ -82,6 +95,27 @@ Header (Padding-Größe, CRC-32 inkl. Prüfung, Tag-Restrictions), Unsynchronisa
 Außerdem werden APEv1/v2- und Lyrics3-Blöcke erkannt, damit sie nicht als
 Audiodaten gelten.
 
+**WAV** (`wavAnalyze`) – Container RIFF, RIFX (Big Endian), RF64 und BW64
+(64-Bit-Größen aus `ds64`), Liste aller Chunks mit Offset, Header-Hex, Größe,
+Pad-Byte und Inhaltsanalyse, LIST-Chunks mit Unterchunks:
+
+* `fmt `: Formattag (PCM, Float, A-law, µ-law, ADPCM, MP3 …), Kanäle,
+  Samplerate, Byterate, BlockAlign, Bits; WAVE_FORMAT_EXTENSIBLE mit
+  validBits, Kanalmaske/Lautsprecherbelegung und SubFormat-GUID; ADPCM-,
+  IMA-, MPEG- und MP3-Erweiterungen; Konsistenzprüfungen
+* `data`: Anzahl Sample-Frames, Dauer; bei PCM/Float pro Kanal Min/Max,
+  Peak und RMS in dBFS, DC-Offset, geclippte Samples; MP3/MPEG in WAV
+  wird Frame für Frame wie bei `mp3Analyze` zerlegt
+* `fact`, `LIST/INFO` (INAM, IART, ICMT …), `LIST/adtl` (labl, note, ltxt,
+  file), `cue `, `plst`, `smpl` (Loops, MIDI-Note, SMPTE), `inst`, `acid`,
+  `bext` (BWF inkl. Loudness, Coding History), `cart`, `ds64`, `PEAK`,
+  `iXML`, `axml`, `_PMX` (XMP), `chna`, `DISP`, `afsp`, `umid`, `MD5 `,
+  `JUNK`/`PAD `/`FLLR`; unbekannte Chunks als Hex/ASCII-Vorschau
+* ID3: `id3 `/`ID3 `-Chunks, ID3v2 vor dem RIFF-Header und ID3v1/ID3v2 hinter
+  dem RIFF-Container – analysiert mit derselben ID3-Analyse wie bei MP3
+* Chunks hinter dem deklarierten RIFF-Ende, nicht finalisierte Dateien
+  (data-Größe 0 / 0xFFFFFFFF), fehlende Pad-Bytes, abgeschnittene Dateien
+
 ## Ausgabe
 
 Eine JSON-taugliche `Map` (Struktur siehe Doku-Kommentar von `mp3Analyze`):
@@ -105,4 +139,5 @@ dart test
 ```
 
 Die Testdateien in `test/fixtures` erzeugt `tool/make_fixtures.py` (Audio mit
-ffmpeg, die ID3-Tags werden von Hand gebaut, um alle Sonderfälle abzudecken).
+ffmpeg, die ID3-Tags werden von Hand gebaut, um alle Sonderfälle abzudecken),
+die WAV-Testdateien `tool/make_wav_fixtures.py`.
