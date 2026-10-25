@@ -9,6 +9,8 @@ Analyse von MP3-, WAV- und Ogg/Vorbis-Dateien inkl. Tags – reines Dart, keine 
 Map<String, Object?>  mp3Analyze(Uint8List data)               // MPEG-Frames + alle Tags einer MP3-Datei
 Map<String, Object?>  wavAnalyze(Uint8List data)               // WAV: Format, alle Chunks, ID3-Tags
 Map<String, Object?>  oggAnalyze(Uint8List data)               // Ogg: Seiten, Streams, Vorbis-Header, Pakete
+String                analysisToText(Map<String, Object?> analysis,   // jedes Ergebnis als formatierter Text
+                          {int indent = 2, int maxLineWidth = 100, int? maxListItems})
 Map<String, Object?>  id3Analyze(Uint8List data)               // alle ID3-Tags (v1, v1.1, v2.2, v2.3, v2.4)
 Map<String, Object?>? id3v2Analyze(Uint8List data, [int offset = 0])  // ein ID3v2-Tag ab offset
 Map<String, Object?>? id3v1Analyze(Uint8List data, [int? offset])     // ein ID3v1-Tag (Standard: letzte 128 Bytes)
@@ -25,6 +27,7 @@ lib/mp3_analyze.dart              library + mp3Analyze()
 lib/src/id3_analyze.dart          öffentliche ID3-Analyse (id3Analyze, id3v2Analyze, id3v1Analyze)
 lib/src/wav_analyze.dart          wavAnalyze()
 lib/src/ogg_analyze.dart          oggAnalyze()
+lib/src/analysis_text.dart        analysisToText()
 lib/src/mp3_bytes.dart            Byte-/Text-Helfer, Syncsafe, Unsynchronisation, CRC-32
 lib/src/mp3_inflate.dart          eigener zlib/deflate-Decoder für komprimierte ID3v2-Frames
 lib/src/mp3_mpeg_frames.dart      MPEG-Audio-Frames, Xing/Info/LAME, VBRI
@@ -56,6 +59,7 @@ part 'src/mp3_id3v2_names.dart';
 part 'src/id3_analyze.dart';
 part 'src/wav_analyze.dart';
 part 'src/ogg_analyze.dart';
+part 'src/analysis_text.dart';
 ```
 
 (`dart:math` wird zusätzlich als `import 'dart:math' as math;` benötigt.)
@@ -150,6 +154,33 @@ Beispiel-Programm:
 
 ```
 dart run example/mp3_analyze_example.dart datei.mp3 [--frames]
+```
+
+### Als Text
+
+`analysisToText(result)` erzeugt eingerückten Text. Innerhalb jeder Ebene
+werden die Schlüssel auf gleiche Breite gebracht, die Doppelpunkte stehen also
+direkt untereinander; Listeneinträge erscheinen als `[0]`, `[1]` …, Listen
+einfacher Werte und mehrzeilige Texte laufen in der Wertespalte weiter.
+`maxListItems` kürzt lange Listen (z. B. tausende MPEG-Frames).
+
+```
+fileSize : 33888
+tagsFound: ID3v2.3.0, ID3v1.1
+id3v2    :
+  [0]:
+    location: start of file
+    offset  : 0
+    version : ID3v2.3.0
+    header  :
+      hex  : 49 44 33 03 00 C0 00 00 05 5D
+      flags:
+        unsynchronisation: true
+        extendedHeader   : true
+```
+
+```
+dart run example/mp3_analyze_example.dart datei.mp3 --text
 ```
 
 ## Tests

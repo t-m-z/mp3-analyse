@@ -5,6 +5,8 @@
 /// * [wavAnalyze]   - WAV file: format, all RIFF chunks, ID3 tags
 /// * [oggAnalyze]   - Ogg file: pages, logical streams, Vorbis (Opus, FLAC,
 ///                    Speex, Theora) headers, comments and packets
+/// * [analysisToText] - formatted text of any of these results (indented,
+///                    colons aligned)
 /// * [id3Analyze]   - all ID3 tags (v1, v1.1, v2.2, v2.3, v2.4) in a byte buffer
 /// * [id3v2Analyze] - a single ID3v2 tag at a given offset
 /// * [id3v1Analyze] - a single ID3v1 / ID3v1.1 tag
@@ -50,6 +52,7 @@ part 'src/mp3_id3v2_names.dart';
 part 'src/id3_analyze.dart';
 part 'src/wav_analyze.dart';
 part 'src/ogg_analyze.dart';
+part 'src/analysis_text.dart';
 
 /// Analyses the bytes of an MP3 file.
 ///

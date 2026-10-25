@@ -1,6 +1,6 @@
-// Usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav|file.ogg> [--frames]
+// Usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav|file.ogg> [--frames] [--text]
 //
-// Prints the analysis as JSON. Without --frames the (long) list of MPEG
+// Prints the analysis as JSON (or with --text as formatted text). Without --frames the (long) list of MPEG
 // frames is shortened to the first three frames.
 import 'dart:convert';
 import 'dart:io';
@@ -10,7 +10,7 @@ import 'package:mp3_analyse/mp3_analyze.dart';
 
 void main(List<String> args) {
   if (args.isEmpty) {
-    stderr.writeln('usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav|file.ogg> [--frames]');
+    stderr.writeln('usage: dart run example/mp3_analyze_example.dart <file.mp3|file.wav|file.ogg> [--frames] [--text]');
     exit(64);
   }
   final bytes = Uint8List.fromList(File(args.first).readAsBytesSync());
@@ -37,5 +37,5 @@ void main(List<String> args) {
       mpeg['frames'] = [...frames.take(3), '... ${frames.length - 3} more frames (use --frames)'];
     }
   }
-  print(const JsonEncoder.withIndent('  ').convert(result));
+  print(args.contains('--text') ? analysisToText(result) : const JsonEncoder.withIndent('  ').convert(result));
 }
