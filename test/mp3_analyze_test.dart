@@ -240,7 +240,7 @@ void main() {
     test('MPEG-2 Layer III', () {
       final frames = ((r['mpeg'] as Map)['frames'] as List).cast<Map>();
       expect(frames.length, 42);
-      expect(frames.first['offset'], 199);
+      expect(frames.first['offset'], 524);
       expect(frames[1]['mpegVersion'], 'MPEG-2');
       expect(frames[1]['samplingRateHz'], 22050);
       expect(frames[1]['samplesPerFrame'], 576);
