@@ -82,6 +82,9 @@ void main() {
       expect(pic['detectedFormat'], 'PNG');
       expect(pic['width'], 2);
       expect(pic['height'], 3);
+      expect(pic['bytes'], isA<Uint8List>());
+      expect((pic['bytes'] as Uint8List).length, pic['sizeBytes']);
+      expect((pic['bytes'] as Uint8List).sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
       expect(content(tag, 'POPM')['rating'], 196);
       expect(content(tag, 'POPM')['counter'], 42);
       expect(content(tag, 'PCNT')['counter'], 7);

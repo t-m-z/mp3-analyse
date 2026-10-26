@@ -25,6 +25,8 @@ class _TxtOptions {
 ///   colon, separated by commas and wrapped at [maxLineWidth] characters;
 ///   continuation lines start in the value column.
 /// * Multi-line strings continue in the value column as well.
+/// * Binary data ([Uint8List] and other [TypedData]) is shown as
+///   `<n bytes>` only.
 /// * With [maxListItems] long lists (e.g. thousands of MPEG frames or Ogg
 ///   pages) are shortened to their first entries plus a line `... n more`.
 ///
@@ -62,6 +64,8 @@ String _txtScalar(Object? v) {
 String? _txtInline(Object? v, int valueColumn, _TxtOptions o) {
   if (_txtIsScalar(v)) return _txtScalar(v);
   if (v is Map) return v.isEmpty ? '{}' : null;
+  // Raw binary data (e.g. picture bytes) is not dumped number by number.
+  if (v is TypedData) return '<${v.lengthInBytes} bytes>';
   if (v is List) {
     if (v.isEmpty) return '[]';
     if (!v.every(_txtIsScalar)) return null;

@@ -186,6 +186,9 @@ Map<String, Object?> _mp3AnalyzeBinaryObject(Uint8List b) {
   if (format != null) out['detectedFormat'] = format;
   if (width != null) out['width'] = width;
   if (height != null) out['height'] = height;
+  // Raw data (copy, independent of the file buffer), e.g. for displaying an
+  // embedded picture. analysisToText shows it only as a byte count.
+  out['bytes'] = Uint8List.fromList(b);
   return out;
 }
 
