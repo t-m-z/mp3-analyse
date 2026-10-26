@@ -50,6 +50,10 @@ void main() {
         '   8, 9, 10, 11, 12\n');
   });
 
+  test('binary data is shown as byte count', () {
+    expect(analysisToText({'bytes': Uint8List.fromList(List<int>.filled(70, 1))}), 'bytes: <70 bytes>\n');
+  });
+
   test('maxListItems shortens lists', () {
     expect(
         analysisToText({
