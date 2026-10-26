@@ -44,10 +44,11 @@ def utf16(s):
     return b'\xff\xfe' + s.encode('utf-16-le')
 
 
-PNG_1x1 = bytes.fromhex(
-    '89504E470D0A1A0A0000000D49484452000000020000000308060000009D7A5E'
-    '6D0000000D4944415478DA63F8FFFF3F0300050001FFFFE0A7E0000000004945'
-    '4E44AE426082')
+# valid 2x3 RGBA PNG (black), decodable by browsers / image libraries
+PNG_2x3 = bytes.fromhex(
+    '89504E470D0A1A0A0000000D4948445200000002000000030806000000B9EADE'
+    '81000000104944415478DA63606060F80FC5680C0047D305FB7877591D000000'
+    '0049454E44AE426082')
 JPEG_HEAD = bytes.fromhex('FFD8FFE000104A46494600010100000100010000FFC00011080040003003012200021101031101FFD9')
 
 
@@ -69,7 +70,7 @@ def tag_v23():
     frames += frame23('TXXX', b'\x00' + latin1('MyKey') + b'\x00' + latin1('MyValue'))
     frames += frame23('WXXX', b'\x00' + latin1('Homepage') + b'\x00' + latin1('https://example.com'))
     frames += frame23('WOAR', latin1('https://artist.example.com'))
-    frames += frame23('APIC', b'\x00' + latin1('image/png') + b'\x00' + b'\x03' + latin1('Cover') + b'\x00' + PNG_1x1)
+    frames += frame23('APIC', b'\x00' + latin1('image/png') + b'\x00' + b'\x03' + latin1('Cover') + b'\x00' + PNG_2x3)
     frames += frame23('POPM', latin1('rater@example.com') + b'\x00' + bytes([196]) + struct.pack('>I', 42))
     frames += frame23('PCNT', struct.pack('>I', 7))
     frames += frame23('UFID', latin1('http://musicbrainz.org') + b'\x00' + latin1('abc-123'))
